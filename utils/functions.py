@@ -1,6 +1,11 @@
 import pandas as pd
 import re
 import html
+import http.client
+import urllib.parse
+import pycountry
+from datetime import datetime
+
 
 # ------------------------------
 # General DataFrame Info Functions
@@ -254,23 +259,17 @@ def convert_columns_to_int(df, columns):
 
 
 def clean_source_names(source):
-    # Decode HTML entities
-    source = html.unescape(source)
-    # Remove .com, .net, etc.
+    source = html.unescape(source)  # decode HTML entities
     source = re.sub(
         r"\.(com|net|org|info|cu|gb|au|de|fr|es|it|ca|us)$",
         "",
         source,
         flags=re.IGNORECASE,
     )
-    # Replace underscores with spaces
-    source = source.replace("_", " ")
-    # Remove unwanted characters like &, !, |, etc.
-    source = re.sub(r"[^\w\s-]", "", source)
-    # Capitalize each word
-    source = source.title()
-    # Remove extra spaces
-    source = re.sub(r"\s+", " ", source).strip()
+    source = source.replace("_", " ")  # replace underscores
+    source = re.sub(r"[^\w\s-]", "", source)  # remove unwanted characters
+    source = source.title()  # capitalize each word
+    source = re.sub(r"\s+", " ", source).strip()  # remove extra spaces
     return source
 
 
@@ -302,7 +301,7 @@ def clean_text(text):
 
     text = re.sub(
         r"&[a-zA-Z#0-9]+;", "", text
-    )  # Remove HTML entities (e.g., &nbsp;, &amp;)
+    )  # remove HTML entities (e.g., &nbsp;, &amp;)
 
     text = re.sub(r"<.*?>", "", text)  # remove HTML tags
 
@@ -313,3 +312,48 @@ def clean_text(text):
     text = re.sub(r"^['\"']+|['\"']+$", "", text)  # remove quote marks
 
     return text
+
+
+def fetch_news():
+    """
+    Fetch news from the MediaStack API.
+
+    """
+    conn = http.client.HTTPConnection("api.mediastack.com")
+
+    params = urllib.parse.urlencode(
+        {
+            "access_key": os.getenv("MEDIASTACK_API_KEY"),  # Use the API key from .env
+            "categories": "-general,-sports",
+            "sort": "published_desc",
+            "limit": 10,
+        }
+    )
+
+    conn.request("GET", "/v1/news?{}".format(params))
+
+    res = conn.getresponse()
+    data = res.read()
+
+    return data.decode("utf-8")
+
+
+def format_response_data(input_data):
+    """
+    Format the response data from the MediaStack API.
+
+    """
+    input_data["published_at"] = datetime.strptime(
+        input_data["published_at"],
+        "%Y-%m-%dT%H:%M:%S+00:00",  # convert date to YYYY-MM-DD format
+    ).strftime("%Y-%m-%d")
+
+    language = pycountry.languages.get(
+        alpha_2=input_data["language"]
+    )  # get language name
+    input_data["language"] = language.name if language else input_data["language"]
+
+    country = pycountry.countries.get(alpha_2=input_data["country"])  # get country name
+    input_data["country"] = country.name if country else input_data["country"]
+
+    return input_data
