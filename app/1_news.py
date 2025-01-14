@@ -20,10 +20,10 @@ def get_user_location():
 
 
 # Streamlit app
-st.title("Top News Based on Your Location")
+st.title("Top News Dashboard")
 
 # Button to request location
-if st.button("Allow Access to Location"):
+if st.button("📍 Allow Location Access"):
     user_country = get_user_location()
     if user_country:
         st.session_state.user_country = (
@@ -31,34 +31,34 @@ if st.button("Allow Access to Location"):
         )
         st.write(f"Your location: {user_country}")
 
-        # Filter news based on user location
-        filtered_news = response_df[response_df["country"] == user_country]
+# Dropdowns for filtering
+countries = response_df["country"].unique().tolist()
+sources = response_df["source"].unique().tolist()
+categories = response_df["category"].unique().tolist()
 
-        # Display top 5 news articles
-        if not filtered_news.empty:
-            st.write("Top 5 news articles:")
-            for index, row in filtered_news.head(5).iterrows():
-                st.subheader(row["title"])
-                st.write(row["description"])
-                if pd.notna(row["url"]):  # Check if URL exists
-                    st.markdown(f"[Read more]({row['url']})", unsafe_allow_html=True)
-        else:
-            st.write(
-                "No news articles found for your location. Displaying random news."
-            )
-            random_news = response_df.sample(n=5)
-            for index, row in random_news.iterrows():
-                st.subheader(row["title"])
-                st.write(row["description"])
-                if pd.notna(row["url"]):  # Check if URL exists
-                    st.markdown(f"[Read more]({row['url']})", unsafe_allow_html=True)
-    else:
-        st.write("Could not determine your location.")
+selected_country = st.selectbox("Select Country", countries)
+selected_source = st.selectbox("Select Source", sources)
+selected_category = st.selectbox("Select Category", categories)
+
+
+# Filter news based on user selections
+filtered_news = response_df[
+    (response_df["country"] == selected_country)
+    & (response_df["source"] == selected_source)
+    & (response_df["category"] == selected_category)
+]
+
+# Display top news articles based on filters
+if not filtered_news.empty:
+    st.write("Filtered news articles:")
+    for index, row in filtered_news.head(5).iterrows():
+        st.subheader(row["title"])
+        st.write(row["description"])
+        if pd.notna(row["url"]):  # Check if URL exists
+            st.markdown(f"[Read more]({row['url']})", unsafe_allow_html=True)
 else:
-    st.write("You can choose to allow access to your location to see relevant news.")
-    # Display random news if location is not provided
+    st.write("No news articles found for the selected filters. Displaying random news.")
     random_news = response_df.sample(n=5)
-    st.write("Displaying random news:")
     for index, row in random_news.iterrows():
         st.subheader(row["title"])
         st.write(row["description"])
