@@ -3,7 +3,7 @@ import pandas as pd
 import requests
 import random
 
-# Sample DataFrame (replace this with your actual DataFrame)
+# Load the DataFrame
 data = pd.read_csv("data/clean/1_mediastack_news_cleaned.csv")
 response_df = pd.DataFrame(data)
 
@@ -22,10 +22,13 @@ def get_user_location():
 # Streamlit app
 st.title("Top News Based on Your Location")
 
-# Ask for user permission to access location
+# Button to request location
 if st.button("Allow Access to Location"):
     user_country = get_user_location()
     if user_country:
+        st.session_state.user_country = (
+            user_country  # Store the country in session state
+        )
         st.write(f"Your location: {user_country}")
 
         # Filter news based on user location
@@ -49,6 +52,8 @@ if st.button("Allow Access to Location"):
                 st.write(row["description"])
                 if pd.notna(row["url"]):  # Check if URL exists
                     st.markdown(f"[Read more]({row['url']})", unsafe_allow_html=True)
+    else:
+        st.write("Could not determine your location.")
 else:
     st.write("You can choose to allow access to your location to see relevant news.")
     # Display random news if location is not provided
