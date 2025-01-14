@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Articles</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .article {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .title {
+            font-size: 1.5em;
+            margin: 0 0 10px;
+        }
+        .description {
+            margin: 0 0 10px;
+        }
+        .read-more {
+            display: inline-block;
+            padding: 10px 15px;
+            background-color: #007BFF;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .read-more:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Latest News</h1>
+    {% for article in articles %}
+        <div class="article">
+            <div class="title">{{ article.title }}</div>
+            <div class="description">{{ article.description }}</div>
+            {% if article.url %}
+                <a class="read-more" href="{{ article.url }}" target="_blank">Read more</a>
+            {% endif %}
+        </div>
+    {% endfor %}
+</body>
+</html> 

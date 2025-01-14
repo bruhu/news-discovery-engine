@@ -37,6 +37,8 @@ if st.button("Allow Access to Location"):
             for index, row in filtered_news.head(5).iterrows():
                 st.subheader(row["title"])
                 st.write(row["description"])
+                if pd.notna(row["url"]):  # Check if URL exists
+                    st.markdown(f"[Read more]({row['url']})", unsafe_allow_html=True)
         else:
             st.write(
                 "No news articles found for your location. Displaying random news."
@@ -45,6 +47,8 @@ if st.button("Allow Access to Location"):
             for index, row in random_news.iterrows():
                 st.subheader(row["title"])
                 st.write(row["description"])
+                if pd.notna(row["url"]):  # Check if URL exists
+                    st.markdown(f"[Read more]({row['url']})", unsafe_allow_html=True)
 else:
     st.write("You can choose to allow access to your location to see relevant news.")
     # Display random news if location is not provided
@@ -53,3 +57,5 @@ else:
     for index, row in random_news.iterrows():
         st.subheader(row["title"])
         st.write(row["description"])
+        if pd.notna(row["url"]):  # Check if URL exists
+            st.markdown(f"[Read more]({row['url']})", unsafe_allow_html=True)
