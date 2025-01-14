@@ -1,3 +1,5 @@
+import pycountry
+
 source_country_dict = {
     "Stgnews": "United States",
     "Zimbabwe Mail": "Zimbabwe",
@@ -384,6 +386,23 @@ source_country_dict = {
     "Itnewsafrica": "South Africa",
 }
 
+
 def add_country_column(df, column_name):
     df["country"] = df[column_name].map(source_country_dict)
+
+    return df
+
+
+def add_country_code_column(df, column_name):
+    def get_country_code(x):
+        try:
+            country = pycountry.countries.get(name=x)  # get by country name
+            if country:
+                return country.alpha_2
+            else:
+                return None
+        except LookupError:
+            return None
+
+    df["country_code"] = df[column_name].apply(get_country_code)
     return df

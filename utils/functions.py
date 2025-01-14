@@ -286,30 +286,22 @@ def clean_text(text):
     Returns:
         str: The cleaned text.
     """
+
+    text = text.lower()  # Convert text to lowercase
+
     text = re.sub(r"https?://\S+|www\.\S+", "", text)  # remove URLs
-
     text = re.sub(r"\(.*?\)", "", text)  # remove parentheses
-
     text = re.sub(r"\[.*?\]", "", text)  # remove square brackets
-
     text = re.sub(r"[\\/]", " ", text)  # remove slashes
-
     text = re.sub(r"[\u2013\u2014\u2212]", "-", text)  # remove hyphens
-
     text = re.sub(r"[-]{2,}", "-", text)  # remove double hyphens
-
     text = re.sub(r"\?[\w&=.-]*", "", text)  # remove query parameters
-
     text = re.sub(
         r"&[a-zA-Z#0-9]+;", "", text
     )  # remove HTML entities (e.g., &nbsp;, &amp;)
-
     text = re.sub(r"<.*?>", "", text)  # remove HTML tags
-
     text = re.sub(r"\s+", " ", text)  # remove extra spaces
-
     text = text.strip()  # trim leading and trailing spaces
-
     text = re.sub(r"^['\"']+|['\"']+$", "", text)  # remove quote marks
 
     return text
