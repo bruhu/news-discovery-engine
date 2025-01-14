@@ -1,6 +1,12 @@
 import pandas as pd
 import re
 import html
+import http.client
+import urllib.parse
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # Load environment variables from .env file
 
 # ------------------------------
 # General DataFrame Info Functions
@@ -313,3 +319,23 @@ def clean_text(text):
     text = re.sub(r"^['\"']+|['\"']+$", "", text)  # remove quote marks
 
     return text
+
+
+def fetch_news():
+    conn = http.client.HTTPConnection("api.mediastack.com")
+
+    params = urllib.parse.urlencode(
+        {
+            "access_key": os.getenv("MEDIASTACK_API_KEY"),  # Use the API key from .env
+            "categories": "-general,-sports",
+            "sort": "published_desc",
+            "limit": 10,
+        }
+    )
+
+    conn.request("GET", "/v1/news?{}".format(params))
+
+    res = conn.getresponse()
+    data = res.read()
+
+    return data.decode("utf-8")
