@@ -253,7 +253,7 @@ def convert_columns_to_int(df, columns):
 # ------------------------------
 
 
-def clean_source_name(source):
+def clean_source_names(source):
     # Decode HTML entities
     source = html.unescape(source)
     # Remove .com, .net, etc.
