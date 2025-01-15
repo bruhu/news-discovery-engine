@@ -41,12 +41,30 @@ def filter_news(df, country=None, source=None, category=None):
     return df
 
 
+# Function to extract the first few sentences from a description
+def extract_sentences(text, num_sentences=2):
+    """Extract the first few sentences from a given text based on periods."""
+    # Find the positions of the periods
+    period_indices = [i for i, char in enumerate(text) if char == "."]
+
+    # If there are fewer periods than requested sentences, return the whole text
+    if len(period_indices) < num_sentences:
+        return text
+
+    # Get the end index of the last sentence to include
+    end_index = period_indices[num_sentences - 1] + 1  # Include the period
+    return text[:end_index].strip()  # Return the text up to the end index
+
+
 # Function to display news articles in the Streamlit app
 def display_news(articles):
     """Display news articles in the Streamlit app."""
     for index, row in articles.iterrows():
         st.subheader(row["title"])
-        st.write(row["description"])
+        description = extract_sentences(
+            row["description"], num_sentences=2
+        )  # Get first 2 sentences
+        st.write(description)
         if pd.notna(row["url"]):  # Check if URL exists
             st.markdown(f"[Read full article]({row['url']})", unsafe_allow_html=True)
 
@@ -112,6 +130,7 @@ filtered_news = filter_news(
 
 # Display top news articles based on filters
 if not filtered_news.empty:
+    st.sidebar.write("Filtered news articles:")
     display_news(filtered_news.head(5))
 else:
     st.sidebar.write("No news articles found for the selected filters.")
