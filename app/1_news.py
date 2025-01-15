@@ -7,6 +7,9 @@ import random
 data = pd.read_csv("data/clean/1_mediastack_news_cleaned.csv")
 response_df = pd.DataFrame(data)
 
+# Initialize location_news
+location_news = None
+
 
 # Function to get user location
 def get_user_location():
@@ -41,7 +44,9 @@ if "user_country" in st.session_state:
             st.subheader(row["title"])
             st.write(row["description"])
             if pd.notna(row["url"]):  # Check if URL exists
-                st.markdown(f"[Read more]({row['url']})", unsafe_allow_html=True)
+                st.markdown(
+                    f"[Read full article]({row['url']})", unsafe_allow_html=True
+                )
     else:
         st.write("No news articles found for your location. Displaying random news.")
         location_news = None  # No location news found
@@ -56,7 +61,7 @@ if location_news is None or location_news.empty:
         st.subheader(row["title"])
         st.write(row["description"])
         if pd.notna(row["url"]):  # Check if URL exists
-            st.markdown(f"[Read more]({row['url']})", unsafe_allow_html=True)
+            st.markdown(f"[Read full article]({row['url']})", unsafe_allow_html=True)
 
 # Toggle for showing filters
 show_filters = st.button("Show Filters")
@@ -85,7 +90,9 @@ if show_filters:
             st.subheader(row["title"])
             st.write(row["description"])
             if pd.notna(row["url"]):  # Check if URL exists
-                st.markdown(f"[Read more]({row['url']})", unsafe_allow_html=True)
+                st.markdown(
+                    f"[Read full article]({row['url']})", unsafe_allow_html=True
+                )
     else:
         st.write("No news articles found for the selected filters.")
 else:
