@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import requests
+import re  # Import regex for cleaning text
 
 
 # Load CSS
@@ -41,11 +42,50 @@ def filter_news(df, country=None, source=None, category=None):
     return df
 
 
+# Function to clean the description text
+def clean_description(text):
+    """Clean the description text by removing URLs and unwanted characters."""
+    # Remove URLs
+    text = re.sub(r"https?://\S+|www\.\S+", "", text)
+    # Remove specific unwanted phrases or domains
+    text = re.sub(
+        r"\bmarketscreener\.com\b", "", text, flags=re.IGNORECASE
+    )  # Example of removing a specific domain
+    # Remove unwanted characters (keeping only alphanumeric characters and basic punctuation)
+    text = re.sub(r'[^a-zA-Z0-9.,!?\'" ]+', " ", text)
+    # Remove extra spaces
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
 # Function to extract the first few sentences from a description
 def extract_sentences(text, num_sentences=2):
     """Extract the first few sentences from a given text based on periods."""
-    # Find the positions of the periods
-    period_indices = [i for i, char in enumerate(text) if char == "."]
+    # Define a list of common abbreviations
+    abbreviations = [
+        "U.S.",
+        "Dr.",
+        "Mr.",
+        "Mrs.",
+        "Ms.",
+        "Lt.",
+        "Col.",
+        "Inc.",
+        "e.g.",
+        "i.e.",
+    ]
+
+    # Create a regex pattern to match periods that are not followed by a space and are not part of abbreviations
+    pattern = r"\.(?!\s|$)(?<!\b(?:" + "|".join(abbreviations) + r")\.)"
+
+    # Find the positions of the periods that are followed by a space or the end of the string
+    period_indices = [
+        i
+        for i, char in enumerate(text)
+        if char == "."
+        and (i + 1 < len(text) and text[i + 1] == " ")
+        or i + 1 == len(text)
+    ]
 
     # If there are fewer periods than requested sentences, return the whole text
     if len(period_indices) < num_sentences:
@@ -60,11 +100,17 @@ def extract_sentences(text, num_sentences=2):
 def display_news(articles):
     """Display news articles in the Streamlit app."""
     for index, row in articles.iterrows():
-        st.subheader(row["title"])
+        title = clean_description(row["title"])  # Clean the title
+        st.subheader(title)
+
+        cleaned_description = clean_description(
+            row["description"]
+        )  # Clean the description
         description = extract_sentences(
-            row["description"], num_sentences=2
+            cleaned_description, num_sentences=2
         )  # Get first 2 sentences
         st.write(description)
+
         if pd.notna(row["url"]):  # Check if URL exists
             st.markdown(f"[Read full article]({row['url']})", unsafe_allow_html=True)
 
