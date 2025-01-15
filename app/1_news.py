@@ -1,26 +1,69 @@
 import streamlit as st
 import pandas as pd
 import requests
-import random
-
-# Load the DataFrame
-data = pd.read_csv("data/clean/1_mediastack_news_cleaned.csv")
-response_df = pd.DataFrame(data)
-
-# Initialize location_news
-location_news = None
 
 
-# Function to get user location
+# Function to fetch the user's location based on their IP address
 def get_user_location():
+    """Fetch the user's location based on their IP address."""
     try:
         response = requests.get("https://ipinfo.io/json")
         data = response.json()
         return data["country"]
     except Exception as e:
-        st.error("Could not retrieve location. Defaulting to random news.")
         return None
 
+
+# Function to load the news data from a CSV file
+def load_data(file_path):
+    """Load the news data from a CSV file."""
+    return pd.read_csv(file_path)
+
+
+# Function to filter the news DataFrame based on user selections
+def filter_news(df, country=None, source=None, category=None):
+    """Filter the news DataFrame based on user selections."""
+    if country and country != "---":
+        df = df[df["country"] == country]
+    if source and source != "---":
+        df = df[df["source"] == source]
+    if category and category != "---":
+        df = df[df["category"] == category]
+    return df
+
+
+# Function to display news articles in the Streamlit app
+def display_news(articles):
+    """Display news articles in the Streamlit app."""
+    for index, row in articles.iterrows():
+        st.subheader(row["title"])
+        st.write(row["description"])
+        if pd.notna(row["url"]):  # Check if URL exists
+            st.markdown(f"[Read full article]({row['url']})", unsafe_allow_html=True)
+
+
+# Function to show news articles based on the user's location
+def show_location_news(response_df):
+    """Show news articles based on the user's location."""
+    location_news = response_df[response_df["country"] == st.session_state.user_country]
+    if not location_news.empty:
+        st.write("News articles based on your location:")
+        display_news(location_news.head(5))
+    else:
+        st.write("No news articles found for your location. Displaying random news.")
+
+
+# Function to show random news articles
+def show_random_news(response_df):
+    """Show random news articles."""
+    st.write("Displaying random news:")
+    random_news = response_df.sample(n=5)
+    display_news(random_news)
+
+
+# Load the DataFrame
+data_file_path = "data/clean/1_mediastack_news_cleaned.csv"
+response_df = load_data(data_file_path)
 
 # Streamlit app
 st.title("Top News Dashboard")
@@ -34,66 +77,33 @@ if st.button("📍 Allow Location Access"):
         )
         st.write(f"Your location: {user_country}")
 
-# Show random news or news based on location
+# Show news based on location or random news
 if "user_country" in st.session_state:
-    # Filter news based on user location
-    location_news = response_df[response_df["country"] == st.session_state.user_country]
-    if not location_news.empty:
-        st.write("News articles based on your location:")
-        for index, row in location_news.head(5).iterrows():
-            st.subheader(row["title"])
-            st.write(row["description"])
-            if pd.notna(row["url"]):  # Check if URL exists
-                st.markdown(
-                    f"[Read full article]({row['url']})", unsafe_allow_html=True
-                )
-    else:
-        st.write("No news articles found for your location. Displaying random news.")
-        location_news = None  # No location news found
+    show_location_news(response_df)
 else:
     st.write("Location access not granted. Displaying random news.")
+    show_random_news(response_df)
 
-# If no location news, show random news
-if location_news is None or location_news.empty:
-    st.write("Displaying random news:")
-    random_news = response_df.sample(n=5)
-    for index, row in random_news.iterrows():
-        st.subheader(row["title"])
-        st.write(row["description"])
-        if pd.notna(row["url"]):  # Check if URL exists
-            st.markdown(f"[Read full article]({row['url']})", unsafe_allow_html=True)
+# Sidebar for filters
+st.sidebar.header("Filter Options")
+countries = ["---"] + response_df["country"].unique().tolist()
+sources = ["---"] + response_df["source"].unique().tolist()
+categories = ["---"] + [
+    category.capitalize() for category in response_df["category"].unique().tolist()
+]
 
-# Toggle for showing filters
-show_filters = st.button("Show Filters")
+selected_country = st.sidebar.selectbox("Select Country", countries)
+selected_source = st.sidebar.selectbox("Select Source", sources)
+selected_category = st.sidebar.selectbox("Select Category", categories)
 
-if show_filters:
-    # Dropdowns for filtering
-    countries = response_df["country"].unique().tolist()
-    sources = response_df["source"].unique().tolist()
-    categories = response_df["category"].unique().tolist()
+# Filter news based on user selections
+filtered_news = filter_news(
+    response_df, selected_country, selected_source, selected_category
+)
 
-    selected_country = st.selectbox("Select Country", countries)
-    selected_source = st.selectbox("Select Source", sources)
-    selected_category = st.selectbox("Select Category", categories)
-
-    # Filter news based on user selections
-    filtered_news = response_df[
-        (response_df["country"] == selected_country)
-        & (response_df["source"] == selected_source)
-        & (response_df["category"] == selected_category)
-    ]
-
-    # Display top news articles based on filters
-    if not filtered_news.empty:
-        st.write("Filtered news articles:")
-        for index, row in filtered_news.head(5).iterrows():
-            st.subheader(row["title"])
-            st.write(row["description"])
-            if pd.notna(row["url"]):  # Check if URL exists
-                st.markdown(
-                    f"[Read full article]({row['url']})", unsafe_allow_html=True
-                )
-    else:
-        st.write("No news articles found for the selected filters.")
+# Display top news articles based on filters
+if not filtered_news.empty:
+    st.sidebar.write("Filtered news articles:")
+    display_news(filtered_news.head(5))
 else:
-    st.write("Click 'Show Filters' to display the filtering options.")
+    st.sidebar.write("No news articles found for the selected filters.")
