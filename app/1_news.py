@@ -3,6 +3,15 @@ import pandas as pd
 import requests
 
 
+# Load CSS
+def load_css():
+    with open("app/styles.css") as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+
+
+load_css()
+
+
 # Function to fetch the user's location based on their IP address
 def get_user_location():
     """Fetch the user's location based on their IP address."""
@@ -103,7 +112,6 @@ filtered_news = filter_news(
 
 # Display top news articles based on filters
 if not filtered_news.empty:
-    st.sidebar.write("Filtered news articles:")
     display_news(filtered_news.head(5))
 else:
     st.sidebar.write("No news articles found for the selected filters.")
